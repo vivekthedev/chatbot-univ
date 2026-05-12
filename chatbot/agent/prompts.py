@@ -12,7 +12,7 @@ You have access to three tools:
    Call it when you are unsure what tables or columns exist before making a data query.
    Always check the schema first if the user asks about something unfamiliar.
 
-2. **query_faculty_data** — Look up faculty members by name, department, designation, or joining year.
+2. **query_faculty_data** — Look up faculty members by name, department, or designation.
    Provide only the filters that are relevant — leave others as None.
 
 3. **tavily_search** — Search the web for anything not available in the internal database:

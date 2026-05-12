@@ -3,3 +3,4 @@
 
 ingestion\venv
 ingestion\__pycache__
+.env
