@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+from urllib.parse import quote_plus
+
 from dotenv import load_dotenv
 
 # Load the root-level .env (one level up from chatbot/)
@@ -14,12 +16,15 @@ def _require(key: str) -> str:
 
 
 # ── Database ───────────────────────────────────────────────────────────────────
-DB_HOST     = _require("DB_HOST")
-DB_USER     = _require("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")   # empty password is valid
-DB_NAME     = _require("DB_NAME")
+DB_HOST = _require("DB_HOST")
+DB_USER = _require("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")  # empty password is valid
+DB_NAME = _require("DB_NAME")
+DB_PORT = int(os.getenv("DB_PORT", "3306"))
 
-DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+_safe_pw = quote_plus(DB_PASSWORD) if DB_PASSWORD else ""
+_auth = f"{DB_USER}:{_safe_pw}@" if DB_PASSWORD else f"{DB_USER}@"
+DATABASE_URL = f"mysql+pymysql://{_auth}{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # ── LLM ───────────────────────────────────────────────────────────────────────
 LLM_PROVIDER    = _require("LLM_PROVIDER")    # google_genai | openai | anthropic | groq
