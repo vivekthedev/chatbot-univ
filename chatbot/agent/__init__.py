@@ -1,8 +1,38 @@
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 
 from .graph import graph
+
+
+def _chunk_content_to_text(content: Any) -> str:
+    """
+    Normalize LLM stream `content` to a plain string.
+
+    Google GenAI and other providers may emit list-shaped content blocks
+    (e.g. [{"type": "text", "text": "..."}]) instead of a single string.
+    """
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict):
+                t = block.get("text")
+                if isinstance(t, str):
+                    parts.append(t)
+                elif t is not None:
+                    parts.append(str(t))
+            else:
+                t = getattr(block, "text", None)
+                if isinstance(t, str):
+                    parts.append(t)
+        return "".join(parts)
+    return str(content)
 
 
 async def stream_response(
@@ -31,5 +61,7 @@ async def stream_response(
         if node is not None and node != "agent":
             continue
         chunk: AIMessageChunk = event["data"]["chunk"]
-        if chunk.content and not chunk.tool_call_chunks:
-            yield chunk.content
+        if not chunk.tool_call_chunks:
+            text = _chunk_content_to_text(chunk.content)
+            if text:
+                yield text
