@@ -1,0 +1,5 @@
+.\chatbot\venv\
+.chatbot\__pycache__
+
+ingestion\venv
+ingestion\__pycache__
