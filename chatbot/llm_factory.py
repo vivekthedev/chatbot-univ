@@ -1,23 +1,40 @@
+from typing import Any
+
 from langchain.chat_models import init_chat_model
-from config import LLM_PROVIDER, LLM_MODEL, LLM_TEMPERATURE
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+from config import GOOGLE_API_KEY, LLM_BASE_URL, LLM_MODEL, LLM_PROVIDER, LLM_TEMPERATURE
 
 
 def get_llm():
     """
     Return a streaming ChatModel based on .env LLM_PROVIDER + LLM_MODEL.
 
-    Supported providers (set LLM_PROVIDER in .env):
-        google_genai  → requires GOOGLE_API_KEY
-        openai        → requires OPENAI_API_KEY
-        anthropic     → requires ANTHROPIC_API_KEY
-        groq          → requires GROQ_API_KEY
-        ollama        → no key needed, local server
+    Google GenAI is constructed explicitly with ``api_key`` from ``GOOGLE_API_KEY``
+    or ``GEMINI_API_KEY`` so the key is never dropped by factory indirection.
 
-    Switching providers requires only .env changes — no code edits.
+    Other providers use ``init_chat_model``; optional ``LLM_BASE_URL`` is passed
+    as ``base_url`` for OpenAI-compatible gateways.
     """
-    return init_chat_model(
-        model=LLM_MODEL,
-        model_provider=LLM_PROVIDER,
-        temperature=LLM_TEMPERATURE,
-        streaming=True,
-    )
+    if LLM_PROVIDER == "google_genai":
+        if not GOOGLE_API_KEY:
+            raise EnvironmentError(
+                "Missing GOOGLE_API_KEY or GEMINI_API_KEY. "
+                "Set one in .env (project root or chatbot/) when LLM_PROVIDER=google_genai."
+            )
+        return ChatGoogleGenerativeAI(
+            model=LLM_MODEL,
+            temperature=LLM_TEMPERATURE,
+            streaming=True,
+            api_key=GOOGLE_API_KEY,
+        )
+
+    kwargs: dict[str, Any] = {
+        "model": LLM_MODEL,
+        "model_provider": LLM_PROVIDER,
+        "temperature": LLM_TEMPERATURE,
+        "streaming": True,
+    }
+    if LLM_BASE_URL:
+        kwargs["base_url"] = LLM_BASE_URL
+    return init_chat_model(**kwargs)
